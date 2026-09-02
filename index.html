@@ -641,7 +641,12 @@
         transition-duration: .01ms !important;
       }
     }
-  </style>
+  
+/* Secret Neon Runner */
+.game-overlay{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(3,5,12,.82);backdrop-filter:blur(12px)}
+.game-overlay.open{display:flex}.game-window{position:relative;width:min(720px,100%);padding:24px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(180deg,rgba(16,20,35,.98),rgba(7,10,19,.98));box-shadow:0 30px 100px rgba(0,0,0,.6)}
+.game-close{position:absolute;right:16px;top:12px;border:0;background:none;color:var(--muted);font-size:28px;cursor:pointer}.game-kicker{font-size:12px;letter-spacing:.18em;color:var(--accent);font-weight:800}.game-window h2{margin:5px 0}.game-help{color:var(--muted);font-size:14px}.game-hud{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;font-size:13px}.game-hud span{padding:7px 10px;border:1px solid var(--line);border-radius:10px}.game-board{position:relative;overflow:hidden;height:360px;border:1px solid var(--line);border-radius:16px;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 30px),repeating-linear-gradient(90deg,rgba(255,255,255,.02) 0 1px,transparent 1px 30px),#050812}.game-player{position:absolute;width:34px;height:34px;border-radius:9px;background:var(--accent);box-shadow:0 0 22px var(--accent);transform:translate(-50%,-50%)}.game-block{position:absolute;width:28px;height:28px;border-radius:6px;background:var(--accent-2);box-shadow:0 0 18px var(--accent-2)}.game-message{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:18px;pointer-events:none;text-shadow:0 0 20px var(--accent)}.game-start{margin-top:14px}.game-footer{margin-top:10px;color:var(--muted);font-size:12px}
+</style>
 </head>
 
 <body>
@@ -914,7 +919,7 @@
       <div>© <span id="year"></span> ProjectVR. All rights reserved.</div>
 
       <div class="footer-links">
-        <a href="https://donutvrxstudios.github.io/ProjectVR/privacypolicy">Privacy Policy</a>
+        <a href="/privacypolicy">Privacy Policy</a>
         <a href="https://discord.gg/mZUwGbmb3X" target="_blank" rel="noopener">Discord</a>
         <a href="https://youtube.com/@p.rojectvr" target="_blank" rel="noopener">YouTube</a>
       </div>
@@ -937,5 +942,20 @@
 
     document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
   </script>
+
+<div class="game-overlay" id="secretGame">
+  <div class="game-window">
+    <button class="game-close" id="closeGame" aria-label="Close">×</button>
+    <div class="game-kicker">SECRET MINI-GAME</div><h2>NEON RUNNER</h2>
+    <div class="game-help">Use WASD or Arrow Keys to dodge the falling blocks. Survive as long as you can.</div>
+    <div class="game-hud"><span>Score: <b id="gameScore">0</b></span><span>Best: <b id="gameBest">0</b></span><span>Lives: <b id="gameLives">3</b></span></div>
+    <div class="game-board" id="gameBoard"><div class="game-player" id="gamePlayer"></div><div class="game-message" id="gameMessage">Press START to play</div></div>
+    <button class="btn game-start" id="startGame">START GAME</button>
+    <div class="game-footer">Tip: click the ProjectVR name in the navigation to find this again.</div>
+  </div>
+</div>
+<script>
+(()=>{const trigger=document.getElementById('secretTrigger'),overlay=document.getElementById('secretGame'),close=document.getElementById('closeGame'),board=document.getElementById('gameBoard'),player=document.getElementById('gamePlayer'),msg=document.getElementById('gameMessage'),start=document.getElementById('startGame'),scoreEl=document.getElementById('gameScore'),bestEl=document.getElementById('gameBest'),livesEl=document.getElementById('gameLives');if(!trigger||!overlay)return;let x=.5,y=.82,score=0,lives=3,running=false,last=0,spawn=0,raf,blocks=[],keys={};let best=Number(localStorage.getItem('projectvr_neon_best')||0);bestEl.textContent=best;function pos(){player.style.left=(x*100)+'%';player.style.top=(y*100)+'%'}function open(){overlay.classList.add('open');pos()}function shut(){overlay.classList.remove('open');running=false;cancelAnimationFrame(raf);blocks.forEach(b=>b.el.remove());blocks=[]}function reset(){score=0;lives=3;x=.5;y=.82;scoreEl.textContent=0;livesEl.textContent=3;msg.textContent='';blocks.forEach(b=>b.el.remove());blocks=[];running=true;last=performance.now();spawn=0;pos();raf=requestAnimationFrame(loop)}function gameOver(){running=false;cancelAnimationFrame(raf);msg.textContent='GAME OVER — '+score+' points';if(score>best){best=score;localStorage.setItem('projectvr_neon_best',best);bestEl.textContent=best}}function addBlock(){const el=document.createElement('div');el.className='game-block';const bx=Math.random()*.92+.04;el.style.left=(bx*100)+'%';el.style.top='-32px';board.appendChild(el);blocks.push({el,x:bx,y:-.08,speed:.22+Math.random()*.16})}function hit(a,b){return Math.abs(a.x-b.x)<.065&&Math.abs(a.y-b.y)<.07}function loop(t){if(!running)return;const dt=Math.min((t-last)/1000,.05);last=t;let dx=0,dy=0;if(keys.ArrowLeft||keys.a)dx--;if(keys.ArrowRight||keys.d)dx++;if(keys.ArrowUp||keys.w)dy--;if(keys.ArrowDown||keys.s)dy++;x=Math.max(.05,Math.min(.95,x+dx*dt*.75));y=Math.max(.08,Math.min(.92,y+dy*dt*.75));pos();spawn+=dt;if(spawn>.55){spawn=0;addBlock()}for(let i=blocks.length-1;i>=0;i--){const b=blocks[i];b.y+=b.speed*dt;b.el.style.top=(b.y*100)+'%';if(hit({x,y},b)){b.el.remove();blocks.splice(i,1);lives--;livesEl.textContent=lives;if(lives<=0){gameOver();return}}else if(b.y>1.05){b.el.remove();blocks.splice(i,1);score+=10;scoreEl.textContent=score}}raf=requestAnimationFrame(loop)}trigger.addEventListener('click',e=>{e.preventDefault();open()});close.addEventListener('click',shut);overlay.addEventListener('click',e=>{if(e.target===overlay)shut()});start.addEventListener('click',reset);window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','a','d','w','s'].includes(e.key)){keys[e.key]=true;if(running)e.preventDefault()}if(e.key==='Escape'&&overlay.classList.contains('open'))shut()});window.addEventListener('keyup',e=>{keys[e.key]=false})})();
+</script>
 </body>
 </html>
